@@ -7,12 +7,15 @@ int main(int argc, char** argv) {
   std::string strategy = argv[2];
   int dim = atoi(argv[3]);
   int iter = atoi(argv[4]);
-  int tn = atoi(argv[5]);
+  int batch_size = atoi(argv[5]);
+  int tn = atoi(argv[6]);
 
-  auto func = [](const Vector& vec) {
+  auto func = [](const std::vector<Vector>& vecs) {
     float sum = 0.0;
-    for (int i = 0; i < vec.dim; ++i) {
-      sum += vec.data[i];
+    for (auto& vec : vecs) {
+      for (int i = 0; i < vec.dim; ++i) {
+        sum += vec.data[i];
+      }
     }
     return sum;
   };
@@ -20,17 +23,17 @@ int main(int argc, char** argv) {
   if (strategy == "mmap") {
     MMapAccessor accessor;
     accessor.open(file_name, dim);
-    parallel_access(accessor, func, tn, iter);
+    parallel_batch_access(accessor, func, tn, iter, batch_size);
     return 0;
   } else if (strategy == "direct") {
     FileAccessor accessor;
     accessor.open(file_name, dim, true);
-    parallel_access(accessor, func, tn, iter);
+    parallel_batch_access(accessor, func, tn, iter, batch_size);
     return 0;
   } else if (strategy == "file") {
     FileAccessor accessor;
     accessor.open(file_name, dim, false);
-    parallel_access(accessor, func, tn, iter);
+    parallel_batch_access(accessor, func, tn, iter, batch_size);
     return 0;
   }
 

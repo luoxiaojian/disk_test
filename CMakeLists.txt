@@ -7,6 +7,8 @@ set(CMAKE_BUILD_TYPE Release)
 find_package(Threads REQUIRED)
 
 add_executable(sync_access sync_access.cc)
+add_executable(batch_access batch_access.cc)
 add_executable(generate_blob generate_blob.cc)
 
 target_link_libraries(sync_access PRIVATE Threads::Threads)
+target_link_libraries(batch_access PRIVATE Threads::Threads)
