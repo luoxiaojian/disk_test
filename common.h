@@ -46,7 +46,7 @@ void parallel_access(ACCESSOR_T& accessor, const FUNC_T& func, int thread_num,
     }
   }
 
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 4; ++i) {
     std::vector<std::thread> threads;
     std::vector<float> result(thread_num);
     auto start = std::chrono::high_resolution_clock::now();
@@ -76,8 +76,7 @@ void parallel_access(ACCESSOR_T& accessor, const FUNC_T& func, int thread_num,
                          end - start)
                          .count()) /
                      1000000.0
-              << " s" << std::endl;
-    std::cout << "result[0] = " << result[0] << std::endl;
+              << " s, result[0] = " << result[0] << std::endl;
   }
 }
 
@@ -93,7 +92,7 @@ void parallel_batch_access(ACCESSOR_T& accessor, const FUNC_T& func,
   std::uniform_int_distribution<size_t> dis(0, vec_num - 1);
   for (int i = 0; i < thread_num; ++i) {
     traces[i].resize(iter);
-    for (int j = 0; j < trace_size; ++j) {
+    for (int j = 0; j < iter; ++j) {
       traces[i][j].reserve(batch_size);
       for (int k = 0; k < batch_size; ++k) {
         traces[i][j].push_back(dis(gen));
@@ -101,7 +100,7 @@ void parallel_batch_access(ACCESSOR_T& accessor, const FUNC_T& func,
     }
   }
 
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 4; ++i) {
     std::vector<std::thread> threads;
     std::vector<float> result(thread_num);
     auto start = std::chrono::high_resolution_clock::now();
@@ -109,19 +108,22 @@ void parallel_batch_access(ACCESSOR_T& accessor, const FUNC_T& func,
       threads.emplace_back(
           [&](int tid) {
             auto& trace = traces[tid];
+            typename ACCESSOR_T::Context ctx;
+            accessor.alloc_context(ctx, batch_size);
             std::vector<Vector> batch(batch_size);
             for (int k = 0; k < batch_size; ++k) {
               accessor.alloc_vec(batch[k]);
             }
             float sum = 0.0;
             for (auto& t : trace) {
-              accessor.batch_get(t, batch);
+              accessor.batch_get(t, batch, ctx);
               sum += func(batch);
             }
             result[tid] = sum;
             for (int k = 0; k < batch_size; ++k) {
               accessor.dealloc_vec(batch[k]);
             }
+            accessor.dealloc_context(ctx);
           },
           j);
     }

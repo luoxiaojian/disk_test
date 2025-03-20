@@ -36,11 +36,13 @@ int main(int argc, char** argv) {
 
   void* addr =
       mmap(nullptr, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  char* data = static_cast<char*>(addr);
+  float* data = static_cast<float*>(addr);
 
   std::uniform_real_distribution<float> dis(0.0, 100.0);
   for (size_t i = 0; i < blob_size; ++i) {
-    data[i] = dis(gen);
+    auto val = dis(gen);
+    // std::cout << "data[" << i << "] = " << val << std::endl;
+    data[i] = val;
   }
 
   if (msync(addr, file_size, MS_SYNC) == -1) {

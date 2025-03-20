@@ -1,10 +1,21 @@
 #ifndef FILE_ACCESSOR_H_
 #define FILE_ACCESSOR_H_
 
+#include "common.h"
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 class FileAccessor {
  public:
   FileAccessor() : fd_(-1), file_size_(0), dim_(0) {}
   ~FileAccessor() { close(); }
+  struct Context {
+    void init(int, int) {}
+  };
 
   void open(const std::string& filename, int dim, bool direct) {
     close();
@@ -44,7 +55,11 @@ class FileAccessor {
     }
   }
 
-  void batch_get(const std::vector<size_t>& idxs, std::vector<Vector>& vecs) {
+  void alloc_context(Context& ctx, int batch_size) {}
+  void dealloc_context(Context& ctx) {}
+
+  void batch_get(const std::vector<size_t>& idxs, std::vector<Vector>& vecs,
+                 Context& ctx) {
     for (size_t i = 0; i < idxs.size(); ++i) {
       get(idxs[i], vecs[i]);
     }

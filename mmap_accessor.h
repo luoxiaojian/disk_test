@@ -5,6 +5,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -13,6 +14,9 @@ class MMapAccessor {
  public:
   MMapAccessor() : fd_(-1), file_size_(0), dim_(0), data_(nullptr), size_(0) {}
   ~MMapAccessor() { close(); }
+  struct Context {
+    void init(int, int) {}
+  };
 
   void open(const std::string& filename, int dim) {
     close();
@@ -57,15 +61,19 @@ class MMapAccessor {
     vec.data = data_ + offset;
   }
 
-  void batch_get(const std::vector<size_t>& idxs, std::vector<Vector>& vecs) {
+  void alloc_context(Context& ctx, int batch_size) {}
+  void dealloc_context(Context& ctx) {}
+
+  void batch_get(const std::vector<size_t>& idxs, std::vector<Vector>& vecs,
+                 Context& ctx) {
     for (size_t i = 0; i < idxs.size(); ++i) {
       get(idxs[i], vecs[i]);
     }
   }
 
-  void alloc_vec(Vector& vec) {}
+  void alloc_vec(Vector& vec) { vec.dim = dim_; }
 
-  void dealloc_vec(Vector& vec) {}
+  void dealloc_vec(Vector& vec) { vec.dim = 0; }
 
  private:
   int fd_;

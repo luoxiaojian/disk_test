@@ -1,6 +1,7 @@
 #include "common.h"
 #include "file_accessor.h"
 #include "mmap_accessor.h"
+#include "uring_accessor.h"
 
 int main(int argc, char** argv) {
   std::string file_name = argv[1];
@@ -33,6 +34,11 @@ int main(int argc, char** argv) {
   } else if (strategy == "file") {
     FileAccessor accessor;
     accessor.open(file_name, dim, false);
+    parallel_batch_access(accessor, func, tn, iter, batch_size);
+    return 0;
+  } else if (strategy == "uring") {
+    UringAccessor accessor;
+    accessor.open(file_name, dim);
     parallel_batch_access(accessor, func, tn, iter, batch_size);
     return 0;
   }
